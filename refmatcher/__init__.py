@@ -14,11 +14,12 @@ bl_info = {
 
 import importlib
 
-from refmatcher import operators, hmi
-for module in [operators, hmi]:
+from refmatcher import properties, operators, hmi
+for module in [properties, operators, hmi]:
     importlib.reload(module)
 
 def register():
+    properties.register()
     operators.register()
     hmi.register()
 
@@ -26,3 +27,4 @@ def register():
 def unregister():
     hmi.unregister()
     operators.unregister()
+    properties.unregister()

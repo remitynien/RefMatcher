@@ -1,6 +1,6 @@
 import bpy
 from bpy.types import Panel, Context
-from refmatcher import operators
+from refmatcher import operators, properties
 
 class REFMATCHER_PT_MainPanel(Panel):
     bl_idname = "REFMATCHER_PT_MainPanel"
@@ -12,8 +12,16 @@ class REFMATCHER_PT_MainPanel(Panel):
 
     def draw(self, context: Context):
         layout = self.layout
-        layout.label(text="Example label")
-        layout.operator(operators.REFMATCHER_OT_ExampleOperator.bl_idname)
+        layout.label(text="Parameters")
+        layout.prop(context.scene, properties.ITERATIONS_PROPNAME)
+        layout.separator()
+
+        layout.label(text="Reference")
+        layout.template_ID(context.scene, properties.REFERENCE_IMAGE_PROPNAME,
+                           new="image.new", open="image.open")
+        layout.separator()
+
+        layout.operator(operators.REFMATCHER_OT_MatchReference.bl_idname)
 
 def register():
     bpy.utils.register_class(REFMATCHER_PT_MainPanel)
