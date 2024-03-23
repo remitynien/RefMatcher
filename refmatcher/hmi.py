@@ -14,6 +14,8 @@ class REFMATCHER_PT_MainPanel(Panel):
         layout = self.layout
         layout.label(text="Parameters")
         layout.prop(context.scene, properties.ITERATIONS_PROPNAME)
+        layout.prop(context.scene, properties.CHANNEL_PROPNAME)
+        layout.prop(context.scene, properties.DISTANCE_PROPNAME)
         layout.separator()
 
         layout.label(text="Reference")
