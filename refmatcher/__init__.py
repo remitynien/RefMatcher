@@ -14,8 +14,8 @@ bl_info = {
 
 import importlib
 
-from refmatcher import properties, operators, hmi
-for module in [properties, operators, hmi]:
+from refmatcher import properties, operators, hmi, image_comparison, dependencies
+for module in [properties, operators, hmi, image_comparison, dependencies]:
     importlib.reload(module)
 
 def register():

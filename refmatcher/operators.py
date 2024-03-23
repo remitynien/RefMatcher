@@ -1,7 +1,22 @@
 import bpy
 from bpy.types import Operator, Context, Image
-from refmatcher import image_comparison
+from refmatcher import image_comparison, dependencies
 from refmatcher.properties import REFERENCE_IMAGE_PROPNAME, CHANNEL_PROPNAME, DISTANCE_PROPNAME
+
+class REFMATCHER_OT_InstallDependencies(Operator):
+    bl_idname = "refmatcher.install_dependencies"
+    bl_category = 'View'
+    bl_label = "Install dependencies"
+    bl_description = 'Installs the required dependencies for the Ref Matcher addon'
+    bl_options = {'REGISTER'}
+
+    def execute(self, context: Context):
+        success = dependencies.install_dependencies()
+        if success:
+            self.report({'INFO'}, f"Successfully installed dependencies: {list(dependencies.DEPENDENCIES.keys())}")
+        else:
+            self.report({'WARNING'}, "Unexpected error occurred while installing dependencies. Please check the console for more information.")
+        return {'FINISHED'}
 
 class REFMATCHER_OT_MatchReference(Operator):
     bl_idname = "refmatcher.match_reference"
@@ -24,8 +39,15 @@ class REFMATCHER_OT_MatchReference(Operator):
         self.report({'INFO'}, f"Comparison result: {result}")
         return {'FINISHED'}
 
+OPERATORS = [
+    REFMATCHER_OT_InstallDependencies,
+    REFMATCHER_OT_MatchReference
+]
+
 def register():
-    bpy.utils.register_class(REFMATCHER_OT_MatchReference)
+    for operator in OPERATORS:
+        bpy.utils.register_class(operator)
 
 def unregister():
-    bpy.utils.unregister_class(REFMATCHER_OT_MatchReference)
+    for operator in OPERATORS:
+        bpy.utils.unregister_class(operator)
