@@ -3,33 +3,23 @@ import os
 import sys
 import subprocess
 import importlib
-from importlib.metadata import version
-import site
+import importlib.util
 from typing import Iterable
+import refmatcher
 
 DEPENDENCIES = {"scipy" : "1.12.0"}
+MODULES_PATH = bpy.utils.user_resource('SCRIPTS', path=os.path.join("addons", refmatcher.__name__, "modules"), create=True)
 
 def get_missing_dependencies() -> Iterable[str]:
-    return (module for module in DEPENDENCIES if importlib.util.find_spec(module) is None)
+    return [module_name for module_name in DEPENDENCIES if not os.path.isfile(os.path.join(MODULES_PATH, module_name, "__init__.py"))]
 
 def check_dependencies() -> bool:
-    return all(importlib.util.find_spec(module) is not None for module in DEPENDENCIES)
+    return all(os.path.isfile(os.path.join(MODULES_PATH, module_name, "__init__.py")) for module_name in DEPENDENCIES)
 
-def get_unmatched_versions() -> dict[str, tuple[str, str]]:
-    """Returns a dictionary of wrongly versioned package names with their installed and required versions."""
-    unmatched_versions = {}
-    for package_name, required_version in DEPENDENCIES.items():
-        if importlib.util.find_spec(package_name) is not None:
-            installed_version = version(package_name)
-            if installed_version != required_version:
-                unmatched_versions[package_name] = (installed_version, required_version)
-    return unmatched_versions
-
-def check_versions() -> bool:
-    return not get_unmatched_versions()
+def check_dependency(module_name: str) -> bool:
+    return os.path.isfile(os.path.join(MODULES_PATH, module_name, "__init__.py"))
 
 def install_dependencies() -> bool:
-    modules_path = bpy.utils.user_resource('SCRIPTS', path=os.path.join('addons', 'modules'), create=True) # TODO: try os.path.join('addons', 'refmatcher', 'modules')
     python_exe = sys.executable
     success_ensurepip = subprocess.call([python_exe, "-m", "ensurepip"]) == 0
     success_upgradepip = subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "pip", '--verbose']) == 0
@@ -37,6 +27,14 @@ def install_dependencies() -> bool:
     for package_name, version in DEPENDENCIES.items():
         if version:
             package_name += f"=={version}"
-        success_install_packages = success_install_packages and subprocess.call([python_exe, "-m", "pip", "install", package_name, "--target", modules_path, "--verbose", "--force-reinstall"]) == 0
-    importlib.reload(site) # refresh accessible modules
+        success_install_packages = success_install_packages and subprocess.call([python_exe, "-m", "pip", "install", package_name, "--target", MODULES_PATH, "--verbose"]) == 0
     return success_ensurepip and success_upgradepip and success_install_packages
+
+def expose_module(module_name: str):
+    assert module_name in DEPENDENCIES
+    file_path = os.path.join(MODULES_PATH, module_name, "__init__.py")
+
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)

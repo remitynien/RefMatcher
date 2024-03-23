@@ -13,20 +13,11 @@ class REFMATCHER_PT_MainPanel(Panel):
     def draw(self, context: Context):
         layout = self.layout
         dependencies_ok = dependencies.check_dependencies()
-        versions_ok = dependencies.check_versions()
 
         if not dependencies_ok:
             dependencies_layout = layout.box()
             dependencies_layout.label(text=f"Missing dependencies: {list(dependencies.get_missing_dependencies())}", icon='ERROR')
             dependencies_layout.operator(operators.REFMATCHER_OT_InstallDependencies.bl_idname)
-
-        if dependencies_ok and not versions_ok:
-            versions_layout = layout.box()
-            versions_layout.label(text="Unexpected dependencies version.", icon='INFO')
-            versions_layout.label(text="This may result in unexpected behaviours or crashes.")
-            for package_name, (installed_version, required_version) in dependencies.get_unmatched_versions().items():
-                versions_layout.label(text=f"{package_name}: installed {installed_version}, required {required_version}")
-            versions_layout.operator(operators.REFMATCHER_OT_InstallDependencies.bl_idname)
 
         interactive_layout = layout.column(align=True)
         interactive_layout.enabled = dependencies_ok
