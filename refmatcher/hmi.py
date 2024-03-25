@@ -25,6 +25,7 @@ class REFMATCHER_PT_MainPanel(Panel):
         interactive_layout.prop(context.scene, properties.ITERATIONS_PROPNAME)
         interactive_layout.prop(context.scene, properties.CHANNEL_PROPNAME)
         interactive_layout.prop(context.scene, properties.DISTANCE_PROPNAME)
+        interactive_layout.prop(context.scene, properties.OPTIMIZER_PROPNAME)
         interactive_layout.separator()
 
         interactive_layout.label(text="Reference")

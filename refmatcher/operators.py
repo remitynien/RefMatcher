@@ -1,13 +1,13 @@
 import bpy
 from bpy.types import Operator, Context, Image
-from refmatcher import image_comparison, dependencies
-from refmatcher.properties import REFERENCE_IMAGE_PROPNAME, CHANNEL_PROPNAME, DISTANCE_PROPNAME
+from refmatcher import dependencies, optimization
+from refmatcher.properties import REFERENCE_IMAGE_PROPNAME, CHANNEL_PROPNAME, DISTANCE_PROPNAME, OPTIMIZER_PROPNAME, ITERATIONS_PROPNAME
 
 class REFMATCHER_OT_InstallDependencies(Operator):
     bl_idname = "refmatcher.install_dependencies"
     bl_category = 'View'
     bl_label = "Install dependencies"
-    bl_description = 'Installs the required dependencies for the Ref Matcher addon'
+    bl_description = "Installs the required dependencies for the Ref Matcher addon"
     bl_options = {'REGISTER'}
 
     def execute(self, context: Context):
@@ -22,7 +22,7 @@ class REFMATCHER_OT_MatchReference(Operator):
     bl_idname = "refmatcher.match_reference"
     bl_category = 'View'
     bl_label = "Match reference"
-    bl_description = 'Matches the reference by adjusting given parameters'
+    bl_description = "Matches the reference by adjusting given parameters"
     bl_options = {'REGISTER'}
 
     @classmethod
@@ -30,13 +30,14 @@ class REFMATCHER_OT_MatchReference(Operator):
         return getattr(context.scene, REFERENCE_IMAGE_PROPNAME) is not None
 
     def execute(self, context: Context):
-        bpy.ops.render.render(write_still=True)
-        rendered_image = image_comparison.rendered_image()
-        reference_image = getattr(context.scene, REFERENCE_IMAGE_PROPNAME)
-        channel = getattr(context.scene, CHANNEL_PROPNAME)
-        distance = getattr(context.scene, DISTANCE_PROPNAME)
-        result = image_comparison.compare_images(reference_image, rendered_image, channel, distance)
-        self.report({'INFO'}, f"Comparison result: {result}")
+        reference_image: Image = getattr(context.scene, REFERENCE_IMAGE_PROPNAME)
+        channel: str = getattr(context.scene, CHANNEL_PROPNAME)
+        distance: str = getattr(context.scene, DISTANCE_PROPNAME)
+        iterations: int = getattr(context.scene, ITERATIONS_PROPNAME)
+        optimizer_name = getattr(context.scene, OPTIMIZER_PROPNAME)
+        optimizer_class = optimization.OPTIMIZER_BY_NAME[optimizer_name]
+        optimizer: optimization.Optimizer = optimizer_class(channel, distance, reference_image, iterations)
+        optimizer.optimize()
         return {'FINISHED'}
 
 OPERATORS = [

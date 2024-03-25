@@ -5,6 +5,7 @@ CHANNEL_PROPNAME = "refmatcher_channel"
 DISTANCE_PROPNAME = "refmatcher_distance"
 ITERATIONS_PROPNAME = "refmatcher_iterations"
 REFERENCE_IMAGE_PROPNAME = "refmatcher_reference_image"
+OPTIMIZER_PROPNAME = "refmatcher_optimizer"
 
 SCENE_ATTRIBUTES = {
     CHANNEL_PROPNAME: EnumProperty(name="Channel", description="Color channel to be used for comparison", default="LUMINANCE",
@@ -20,7 +21,12 @@ SCENE_ATTRIBUTES = {
                                         ('BHATTACHARYYA', "Bhattacharyya", "Bhattacharyya distance"),
                                         ('EARTH_MOVERS', "Earth Movers", "Earth Movers distance"),
                                     ]),
-    ITERATIONS_PROPNAME: IntProperty(name="Iterations", description="Maximum number of iterations", default=10, min=1),
+    ITERATIONS_PROPNAME: IntProperty(name="Iterations", description="Target number of evaluations", default=10, min=1),
+    OPTIMIZER_PROPNAME: EnumProperty(name="Optimizer", description="Optimizer to be used for matching", default="DUAL_ANNEALING",
+                                    items=[
+                                        ('DUAL_ANNEALING', "Dual Annealing", "?"),
+                                        ('DIFFERENTIAL_EVOLUTION', "Differential Evolution", "Good for large numbers of parameters ?"),
+                                    ]),
     REFERENCE_IMAGE_PROPNAME: PointerProperty(name="Reference", description="Reference image", type=Image),
 }
 
