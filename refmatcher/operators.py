@@ -1,6 +1,7 @@
 import bpy
-from bpy.types import Operator, Context, Image
-from refmatcher import dependencies, optimization
+from bpy.types import Operator, Context, Image, Event
+from bpy.props import FloatProperty
+from refmatcher import dependencies, optimization, matching_variables
 from refmatcher.properties import REFERENCE_IMAGE_PROPNAME, CHANNEL_PROPNAME, DISTANCE_PROPNAME, OPTIMIZER_PROPNAME, ITERATIONS_PROPNAME
 
 class REFMATCHER_OT_InstallDependencies(Operator):
@@ -40,9 +41,48 @@ class REFMATCHER_OT_MatchReference(Operator):
         optimizer.optimize()
         return {'FINISHED'}
 
+class REFMATCHER_OT_AddMatchingVariable(Operator):
+    bl_idname = "refmatcher.add_matching_variable"
+    bl_category = 'View'
+    bl_label = "Add matching variable"
+    bl_description = "Adds the property to the list of matching variables"
+    bl_options = {'REGISTER'}
+
+    minimum: FloatProperty(name="Minimum value", default=0.0) # type: ignore
+    maximum: FloatProperty(name="Maximum value", default=1.0) # type: ignore
+
+    def execute(self, context: Context):
+        try:
+            matching_variables.add_matching_variable(context, self.datablock, self.data_path, self.minimum, self.maximum)
+        except Exception as e:
+            return {'CANCELLED', 'PASS_THROUGH'}
+        return {'FINISHED'}
+
+    def invoke(self, context: Context, event: Event):
+        if context.property is None:
+            return {'CANCELLED', 'PASS_THROUGH'}
+        self.datablock, self.data_path, self.array_index = context.property
+        return context.window_manager.invoke_props_dialog(self)
+
+class REFMATCHER_OT_RemoveMatchingVariable(Operator):
+    bl_idname = "refmatcher.remove_matching_variable"
+    bl_category = 'View'
+    bl_label = "Remove matching variable"
+    bl_description = "Removes the property from the list of matching variables"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context: Context):
+        if context.property is None:
+            return {'CANCELLED', 'PASS_THROUGH'}
+        datablock, data_path, array_index = context.property
+        matching_variables.remove_matching_variable(context, datablock, data_path)
+        return {'FINISHED'}
+
 OPERATORS = [
     REFMATCHER_OT_InstallDependencies,
-    REFMATCHER_OT_MatchReference
+    REFMATCHER_OT_MatchReference,
+    REFMATCHER_OT_AddMatchingVariable,
+    REFMATCHER_OT_RemoveMatchingVariable,
 ]
 
 def register():

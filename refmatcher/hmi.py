@@ -1,6 +1,18 @@
 import bpy
-from bpy.types import Panel, Context
-from refmatcher import operators, properties, dependencies
+from bpy.types import Panel, Context, Menu, Property, UIList, UILayout, AnyType
+from refmatcher import operators, properties, dependencies, matching_variables
+
+class REFMATCHER_UL_MatchingProperties(UIList):
+    bl_idname = "REFMATCHER_UL_MatchingProperties"
+
+    def draw_item(self, context: Context, layout: UILayout, data: AnyType, item: properties.MatchingProperty, icon: int, active_data: AnyType, active_property: str):
+        layout.separator()
+        readonly = layout.row()
+        readonly.enabled = False
+        readonly.prop(item, "datablock", text="")
+        readonly.prop(item, "data_path", text="")
+        layout.prop(item, "minimum", text="Min")
+        layout.prop(item, "maximum", text="Max")
 
 class REFMATCHER_PT_MainPanel(Panel):
     bl_idname = "REFMATCHER_PT_MainPanel"
@@ -33,10 +45,33 @@ class REFMATCHER_PT_MainPanel(Panel):
                         new="image.new", open="image.open")
         interactive_layout.separator()
 
+        interactive_layout.template_list(REFMATCHER_UL_MatchingProperties.bl_idname, "", context.scene, properties.MATCHING_PROPERTIES_PROPNAME, context.scene, properties.MATCHING_PROPERTIES_INDEX_PROPNAME)
+        interactive_layout.separator()
+
         interactive_layout.operator(operators.REFMATCHER_OT_MatchReference.bl_idname)
 
+def draw_variable_menu(self: Menu, context: Context):
+    if context.property is None:
+        return
+
+    property: Property = matching_variables.get_hovered_property(context)
+    if not matching_variables.is_optimizable_property(property):
+        return
+
+    layout = self.layout
+    datablock, data_path, array_index = context.property
+    layout.separator()
+    if matching_variables.is_matching_variable(context, datablock, data_path):
+        layout.operator(operators.REFMATCHER_OT_RemoveMatchingVariable.bl_idname)
+    else:
+        layout.operator(operators.REFMATCHER_OT_AddMatchingVariable.bl_idname)
+
 def register():
+    bpy.utils.register_class(REFMATCHER_UL_MatchingProperties)
     bpy.utils.register_class(REFMATCHER_PT_MainPanel)
+    bpy.types.UI_MT_button_context_menu.append(draw_variable_menu)
 
 def unregister():
+    bpy.types.UI_MT_button_context_menu.remove(draw_variable_menu)
     bpy.utils.unregister_class(REFMATCHER_PT_MainPanel)
+    bpy.utils.unregister_class(REFMATCHER_UL_MatchingProperties)

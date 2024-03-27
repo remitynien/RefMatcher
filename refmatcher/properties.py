@@ -1,11 +1,20 @@
-from bpy.types import Scene, Image
-from bpy.props import PointerProperty, IntProperty, EnumProperty
+import bpy
+from bpy.types import Scene, Image, PropertyGroup, ID
+from bpy.props import PointerProperty, IntProperty, EnumProperty, FloatProperty, CollectionProperty, StringProperty
+
+class MatchingProperty(PropertyGroup):
+    datablock: PointerProperty(name="Datablock", type=ID) # type: ignore
+    data_path: StringProperty(name="Data Path") # type: ignore
+    minimum: FloatProperty(name="Minimum") # type: ignore
+    maximum: FloatProperty(name="Maximum") # type: ignore
 
 CHANNEL_PROPNAME = "refmatcher_channel"
 DISTANCE_PROPNAME = "refmatcher_distance"
 ITERATIONS_PROPNAME = "refmatcher_iterations"
-REFERENCE_IMAGE_PROPNAME = "refmatcher_reference_image"
+MATCHING_PROPERTIES_PROPNAME = "refmatcher_matching_properties"
+MATCHING_PROPERTIES_INDEX_PROPNAME = "refmatcher_matching_properties_index"
 OPTIMIZER_PROPNAME = "refmatcher_optimizer"
+REFERENCE_IMAGE_PROPNAME = "refmatcher_reference_image"
 
 SCENE_ATTRIBUTES = {
     CHANNEL_PROPNAME: EnumProperty(name="Channel", description="Color channel to be used for comparison", default="LUMINANCE",
@@ -22,6 +31,8 @@ SCENE_ATTRIBUTES = {
                                         ('EARTH_MOVERS', "Earth Movers", "Earth Movers distance"),
                                     ]),
     ITERATIONS_PROPNAME: IntProperty(name="Iterations", description="Target number of evaluations", default=10, min=1),
+    MATCHING_PROPERTIES_PROPNAME: CollectionProperty(type=MatchingProperty, name="Variables", description="Variables to be optimized for matching"),
+    MATCHING_PROPERTIES_INDEX_PROPNAME: IntProperty(name="Index", description="Index of the selected variable", default=-1),
     OPTIMIZER_PROPNAME: EnumProperty(name="Optimizer", description="Optimizer to be used for matching", default="DUAL_ANNEALING",
                                     items=[
                                         ('DUAL_ANNEALING', "Dual Annealing", "?"),
@@ -31,9 +42,11 @@ SCENE_ATTRIBUTES = {
 }
 
 def register():
+    bpy.utils.register_class(MatchingProperty)
     for propname, prop in SCENE_ATTRIBUTES.items():
         setattr(Scene, propname, prop)
 
 def unregister():
     for propname in SCENE_ATTRIBUTES:
         delattr(Scene, propname)
+    bpy.utils.unregister_class(MatchingProperty)
