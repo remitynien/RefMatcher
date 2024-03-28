@@ -9,6 +9,7 @@ class REFMATCHER_UL_MatchingProperties(UIList):
         layout.separator()
         readonly = layout.row()
         readonly.enabled = False
+        readonly.scale_x = 4/5
         readonly.prop(item, "datablock", text="")
         readonly.prop(item, "data_path", text="")
         layout.prop(item, "minimum", text="Min")
@@ -46,6 +47,7 @@ class REFMATCHER_PT_MainPanel(Panel):
         interactive_layout.separator()
 
         interactive_layout.template_list(REFMATCHER_UL_MatchingProperties.bl_idname, "", context.scene, properties.MATCHING_PROPERTIES_PROPNAME, context.scene, properties.MATCHING_PROPERTIES_INDEX_PROPNAME)
+        interactive_layout.operator(operators.REFMATCHER_OT_RemoveMatchingVariableFromList.bl_idname, icon='REMOVE', text="")
         interactive_layout.separator()
 
         interactive_layout.operator(operators.REFMATCHER_OT_MatchReference.bl_idname)
@@ -61,10 +63,22 @@ def draw_variable_menu(self: Menu, context: Context):
     layout = self.layout
     datablock, data_path, array_index = context.property
     layout.separator()
-    if matching_variables.is_matching_variable(context, datablock, data_path):
-        layout.operator(operators.REFMATCHER_OT_RemoveMatchingVariable.bl_idname)
+    if matching_variables.is_matching_variable(context, datablock, data_path, array_index):
+        if array_index < 0:
+            # single property
+            layout.operator(operators.REFMATCHER_OT_RemoveMatchingVariable.bl_idname)
+        else:
+            # vector property
+            layout.operator(operators.REFMATCHER_OT_RemoveMatchingVariable.bl_idname, text="Remove single matching variable")
+            layout.operator(operators.REFMATCHER_OT_RemoveMatchingVariableVector.bl_idname)
     else:
-        layout.operator(operators.REFMATCHER_OT_AddMatchingVariable.bl_idname)
+        if array_index < 0:
+            # single property
+            layout.operator(operators.REFMATCHER_OT_AddMatchingVariableFloat.bl_idname)
+        else:
+            # vector property
+            layout.operator(operators.REFMATCHER_OT_AddMatchingVariableFloat.bl_idname, text="Add single matching variable")
+            layout.operator(operators.REFMATCHER_OT_AddMatchingVariableVector.bl_idname)
 
 def register():
     bpy.utils.register_class(REFMATCHER_UL_MatchingProperties)

@@ -1,6 +1,6 @@
 import bpy
 from bpy.types import Scene, Image, PropertyGroup, ID
-from bpy.props import PointerProperty, IntProperty, EnumProperty, FloatProperty, CollectionProperty, StringProperty
+from bpy.props import PointerProperty, IntProperty, EnumProperty, FloatProperty, CollectionProperty, StringProperty, FloatVectorProperty, IntVectorProperty
 
 class MatchingProperty(PropertyGroup):
     datablock: PointerProperty(name="Datablock", type=ID) # type: ignore
@@ -41,6 +41,19 @@ SCENE_ATTRIBUTES = {
     REFERENCE_IMAGE_PROPNAME: PointerProperty(name="Reference", description="Reference image", type=Image),
 }
 
+scene_vector_properties = set()
+def get_scene_vector_propname(scene: Scene, type: str, size: int, subtype: str, unit: str, name: str) -> str:
+    assert type in {'FLOAT', 'INT'}, f"Invalid type: {type}"
+    propname = f"refmatcher_{type.lower()}_vector_{size}_{subtype.lower()}_{unit.lower()}_{name.lower()}"
+    if not hasattr(scene, propname):
+        if type == 'FLOAT':
+            prop = FloatVectorProperty(name=name, size=size, subtype=subtype, unit=unit)
+        elif type == 'INT':
+            prop = IntVectorProperty(name=name, size=size, subtype=subtype, unit=unit)
+        setattr(Scene, propname, prop)
+        scene_vector_properties.add(propname)
+    return propname
+
 def register():
     bpy.utils.register_class(MatchingProperty)
     for propname, prop in SCENE_ATTRIBUTES.items():
@@ -49,4 +62,7 @@ def register():
 def unregister():
     for propname in SCENE_ATTRIBUTES:
         delattr(Scene, propname)
+    for propname in scene_vector_properties:
+        delattr(Scene, propname)
+    scene_vector_properties.clear()
     bpy.utils.unregister_class(MatchingProperty)
