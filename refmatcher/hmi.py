@@ -20,8 +20,9 @@ class REFMATCHER_PT_MainPanel(Panel):
     bl_label = "Ref Matcher"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = "output"
-    bl_options = set()
+    bl_context = "render"
+    bl_options = {'DEFAULT_CLOSED'}
+    bl_order = 101 # After color management panel (100)
 
     def draw(self, context: Context):
         layout = self.layout
