@@ -38,7 +38,7 @@ class REFMATCHER_OT_MatchReference(Operator):
         iterations: int = getattr(context.scene, ITERATIONS_PROPNAME)
         optimizer_name = getattr(context.scene, OPTIMIZER_PROPNAME)
         optimizer_class = optimization.OPTIMIZER_BY_NAME[optimizer_name]
-        optimizer: optimization.Optimizer = optimizer_class(channel, distance, reference_image, iterations)
+        optimizer: optimization.Optimizer = optimizer_class(channel, distance, reference_image, iterations, context)
         optimizer.optimize()
         return {'FINISHED'}
 
@@ -55,21 +55,20 @@ class REFMATCHER_OT_AddMatchingVariableFloat(Operator):
     def __init__(self) -> None:
         super().__init__()
         self.datablock = None
-        self.data_path = ""
-        self.array_index = -1
+        self.data_path_indexed = ""
 
     def execute(self, context: Context):
-        if not self.datablock or not self.data_path:
+        if not self.datablock or not self.data_path_indexed:
             return {'CANCELLED', 'PASS_THROUGH'}
-        matching_variables.add_matching_variable(context, self.datablock, self.data_path, self.minimum, self.maximum)
+        matching_variables.add_matching_variable(context, self.datablock, self.data_path_indexed, self.minimum, self.maximum)
         return {'FINISHED'}
 
     def invoke(self, context: Context, event: Event):
         if context.property is None:
             return {'CANCELLED', 'PASS_THROUGH'}
-        self.datablock, self.data_path, self.array_index = context.property
-        if self.array_index >= 0:
-            self.data_path += f"[{self.array_index}]"
+        self.datablock, self.data_path_indexed, array_index = context.property
+        if array_index >= 0:
+            self.data_path_indexed += f"[{array_index}]"
         property: bpy.types.FloatProperty = matching_variables.get_hovered_property(context)
         self.minimum = property.soft_min
         self.maximum = property.soft_max
@@ -101,8 +100,8 @@ class REFMATCHER_OT_AddMatchingVariableVector(Operator):
         min = getattr(context.scene, self.min_propname)
         max = getattr(context.scene, self.max_propname)
         for i in range(self.vector_size):
-            data_path = f"{self.data_path}[{i}]"
-            matching_variables.add_matching_variable(context, self.datablock, data_path, min[i], max[i])
+            data_path_indexed = f"{self.data_path}[{i}]"
+            matching_variables.add_matching_variable(context, self.datablock, data_path_indexed, min[i], max[i])
         return {'FINISHED'}
 
     def invoke(self, context: Context, event: Event):
@@ -132,10 +131,10 @@ class REFMATCHER_OT_RemoveMatchingVariable(Operator):
     def execute(self, context: Context):
         if context.property is None:
             return {'CANCELLED', 'PASS_THROUGH'}
-        datablock, data_path, array_index = context.property
+        datablock, data_path_indexed, array_index = context.property
         if array_index >= 0:
-            data_path += f"[{array_index}]"
-        matching_variables.remove_matching_variable(context, datablock, data_path)
+            data_path_indexed += f"[{array_index}]"
+        matching_variables.remove_matching_variable(context, datablock, data_path_indexed)
         return {'FINISHED'}
 
 class REFMATCHER_OT_RemoveMatchingVariableVector(Operator):

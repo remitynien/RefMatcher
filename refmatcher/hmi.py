@@ -11,7 +11,7 @@ class REFMATCHER_UL_MatchingProperties(UIList):
         readonly.enabled = False
         readonly.scale_x = 4/5
         readonly.prop(item, "datablock", text="")
-        readonly.prop(item, "data_path", text="")
+        readonly.prop(item, "data_path_indexed", text="")
         layout.prop(item, "minimum", text="Min")
         layout.prop(item, "maximum", text="Max")
 

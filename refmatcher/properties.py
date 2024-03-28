@@ -4,7 +4,7 @@ from bpy.props import PointerProperty, IntProperty, EnumProperty, FloatProperty,
 
 class MatchingProperty(PropertyGroup):
     datablock: PointerProperty(name="Datablock", type=ID) # type: ignore
-    data_path: StringProperty(name="Data Path") # type: ignore
+    data_path_indexed: StringProperty(name="Data Path") # type: ignore
     minimum: FloatProperty(name="Minimum") # type: ignore
     maximum: FloatProperty(name="Maximum") # type: ignore
 

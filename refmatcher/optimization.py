@@ -1,8 +1,9 @@
 # TODO: think about using scikit-optimize optimizers. Bayesian optimization could be interesting. https://scikit-opt.github.io/scikit-opt/#/en/README
 
 import bpy
-from bpy.types import Image
+from bpy.types import Image, Context
 from abc import ABC, abstractmethod
+from refmatcher import properties, matching_variables
 
 from refmatcher import dependencies, image_comparison
 exposed_success = dependencies.expose_module("scipy")
@@ -14,43 +15,56 @@ import numpy as np
 
 # TODO: real time visualisation. See https://blender.stackexchange.com/q/141121/185343
 class Optimizer(ABC):
-    def __init__(self, channel: str, distance: str, reference_image: Image, iterations: int):
+    def __init__(self, channel: str, distance: str, reference_image: Image, iterations: int, context: Context):
         self.channel = channel
         self.distance = distance
         self.reference_image = reference_image
         self.iterations = iterations
+        self.context = context
 
-    def evaluate(self, x: np.ndarray):
-        # TODO: update blender properties with x
+    def initial_parameters(self) -> tuple[list[float], list[tuple[float, float]]]:
+        x0: list[float] = []
+        bounds: list[tuple[float, float]] = []
+        for matching_property in getattr(self.context.scene, properties.MATCHING_PROPERTIES_PROPNAME):
+            datablock, data_path_indexed = matching_property.datablock, matching_property.data_path_indexed
+            min, max = matching_property.minimum, matching_property.maximum
+            value = matching_variables.get_value(datablock, data_path_indexed)
+            x0.append(value)
+            bounds.append((min, max))
+        return x0, bounds
+
+    def evaluate(self, x: np.ndarray) -> float:
+        for i, matching_property in enumerate(getattr(self.context.scene, properties.MATCHING_PROPERTIES_PROPNAME)):
+            datablock, data_path_indexed = matching_property.datablock, matching_property.data_path_indexed
+            matching_variables.set_value(datablock, data_path_indexed, x[i])
         bpy.ops.render.render(write_still=True)
         rendered_image = image_comparison.rendered_image()
         result = image_comparison.compare_images(self.reference_image, rendered_image, self.channel, self.distance)
+        print(f"x: {x}, result: {result}")
         return result
 
     @abstractmethod
     def optimize(self):
-        pass
+        raise NotImplementedError()
 
 class DifferentialEvolutionOptimizer(Optimizer):
     def callback(self, intermediate_result: opt.OptimizeResult):
         print(f"Intermediate result: {intermediate_result}")
 
     def optimize(self):
-        # TODO: proper bounds and x0
-        bounds = [(0, 1)] * 4
+        x0, bounds = self.initial_parameters()
         population_multiplier = 15
         generations = max(self.iterations // (len(bounds) * population_multiplier), 1)
         print(f"Starting differential evolution optimization. Target call to evaluation function: {self.iterations}, with population size {len(bounds) * population_multiplier} and {generations} generations.")
-        result = opt.differential_evolution(self.evaluate, bounds, maxiter=generations, popsize=population_multiplier, disp=True, x0=np.random.rand(4), callback=self.callback)
+        result = opt.differential_evolution(self.evaluate, bounds, maxiter=generations, popsize=population_multiplier, disp=True, x0=x0, callback=self.callback)
         print(f"Optimization result: {result}")
         return result
 
 class DualAnnealingOptimizer(Optimizer):
     def optimize(self):
-        # TODO: proper bounds and x0
-        bounds = [(0, 1)] * 4
+        x0, bounds = self.initial_parameters()
         print(f"Starting dual annealing optimization. Target call to evaluation function: {self.iterations}.")
-        result = opt.dual_annealing(self.evaluate, bounds, maxfun=self.iterations, x0=np.random.rand(4))
+        result = opt.dual_annealing(self.evaluate, bounds, maxfun=self.iterations, x0=x0)
         print(f"Optimization result: {result}")
         return result
 
