@@ -22,18 +22,22 @@ def image_to_matrix(image: Image) -> np.ndarray:
 
 # histogram functions
 
+def histogram(a: np.ndarray) -> np.ndarray:
+    resolution = 256
+    return np.histogram(a, bins=resolution, range=(0, 1), density=True)[0] / resolution
+
 def red_histogram(image: np.ndarray) -> np.ndarray:
-    return np.histogram(image[:, :, 0], bins=256, range=(0, 1), density=True)[0] / 256
+    return histogram(image[:, :, 0])
 
 def green_histogram(image: np.ndarray) -> np.ndarray:
-    return np.histogram(image[:, :, 1], bins=256, range=(0, 1), density=True)[0] / 256
+    return histogram(image[:, :, 1])
 
 def blue_histogram(image: np.ndarray) -> np.ndarray:
-    return np.histogram(image[:, :, 2], bins=256, range=(0, 1), density=True)[0] / 256
+    return histogram(image[:, :, 2])
 
 def luminance_histogram(image: np.ndarray) -> np.ndarray:
     luminance = 0.2126 * image[:, :, 0] + 0.7152 * image[:, :, 1] + 0.0722 * image[:, :, 2] # TODO: check if this is correct
-    return np.histogram(luminance, bins=256, range=(0, 1), density=True)[0] / 256
+    return histogram(luminance)
 
 HISTOGRAM_FUNCTIONS_BY_CHANNEL = {
     'RED': {red_histogram},
@@ -47,7 +51,8 @@ HISTOGRAM_FUNCTIONS_BY_CHANNEL = {
 # distance functions
 
 def bhattacharyya_distance(histogram1: np.ndarray, histogram2: np.ndarray) -> float:
-    return -np.log(np.sum(np.sqrt(histogram1 * histogram2)))
+    bhattacharyya_coefficient = np.sum(np.sqrt(histogram1 * histogram2))
+    return -np.log(bhattacharyya_coefficient) if bhattacharyya_coefficient > 0 else np.inf
 
 def earth_movers_distance(histogram1: np.ndarray, histogram2: np.ndarray) -> float:
     assert len(histogram1) == len(histogram2)
