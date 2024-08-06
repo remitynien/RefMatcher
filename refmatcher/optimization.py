@@ -6,10 +6,9 @@ from abc import ABC, abstractmethod
 from refmatcher import properties, matching_variables
 
 from refmatcher import dependencies, image_comparison
-exposed_success = dependencies.expose_module("scipy")
-if not exposed_success:
+dependencies_ok = dependencies.check_dependencies()
+if not dependencies_ok:
     dependencies.install_dependencies() # TODO: if kept this way, delete the install_dependencies call from operators.py and the HMI code.
-    dependencies.expose_module("scipy")
 import scipy.optimize as opt
 import numpy as np
 
