@@ -9,22 +9,31 @@ def is_optimizable_property(property: Property) -> bool:
     return property.type == "FLOAT" # TODO: accept more types
 
 def get_hovered_property(context: Context) -> Property | None:
-    if context.property is None:
-        return
-    datablock: ID
-    data_path: str
-    array_index: int
-    datablock, data_path, array_index = context.property
-    return datablock.path_resolve(data_path, False).data.bl_rna.properties[data_path.split(".")[-1]] # couldn't find a better way to get the property :/
+    return getattr(context, 'button_prop', None)
 
-def get_hovered_value(context: Context) -> float | None:
-    if context.property is None:
-        return
-    datablock: bpy.types.ID
-    data_path: str
-    array_index: int
-    datablock, data_path, array_index = context.property
-    return datablock.path_resolve(data_path)
+def get_hovered_data(context: Context) -> tuple[bpy.types.AnyType, str, int] | None:
+    prop = getattr(context, 'button_prop', None)
+    ptr = getattr(context, 'button_pointer', None)
+    if prop is None or ptr is None:
+        return None
+
+    try:
+        data_path = ptr.path_from_id(prop.identifier)
+    except ValueError: # does not support path creation for this type
+        return None
+    except AttributeError: # path from id not found
+        if prop.identifier in ptr: # if this is a custom property
+            data_path = f"[\"{prop.identifier}\"]"
+        else:
+            return None
+
+    datablock, _, array_index = context.property # data_path isn't taken from context.property since it doesn't return full data path on modifiers or nodes.
+    return (datablock, data_path, array_index)
+
+def is_array(property: Property, array_index: int) -> bool:
+    # determine if it is a vector property with array_length rather than array_index to handle colors better
+    array_length = getattr(property, 'array_length', None)
+    return array_length > 0 if array_length is not None else array_index != -1
 
 def get_value(datablock: ID, data_path_indexed: str) -> float | None:
     return datablock.path_resolve(data_path_indexed)

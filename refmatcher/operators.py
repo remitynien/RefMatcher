@@ -64,11 +64,16 @@ class REFMATCHER_OT_AddMatchingVariableFloat(Operator):
         return {'FINISHED'}
 
     def invoke(self, context: Context, event: Event):
-        if context.property is None:
+        data = matching_variables.get_hovered_data(context)
+        property = matching_variables.get_hovered_property(context)
+        if data is None:
             return {'CANCELLED', 'PASS_THROUGH'}
-        self.datablock, self.data_path_indexed, array_index = context.property
-        if array_index >= 0:
-            self.data_path_indexed += f"[{array_index}]"
+        self.datablock, self.data_path_indexed, array_index = data
+        if property is None:
+            return {'CANCELLED', 'PASS_THROUGH'}
+        is_array = matching_variables.is_array(property, array_index)
+        if is_array:
+            self.data_path_indexed += f"[{min(array_index, 0)}]" # covers edge case where array_index = -1 but is_array is True
         property: bpy.types.FloatProperty = matching_variables.get_hovered_property(context)
         self.minimum = property.soft_min
         self.maximum = property.soft_max
@@ -105,9 +110,10 @@ class REFMATCHER_OT_AddMatchingVariableVector(Operator):
         return {'FINISHED'}
 
     def invoke(self, context: Context, event: Event):
-        if context.property is None:
+        data = matching_variables.get_hovered_data(context)
+        if data is None:
             return {'CANCELLED', 'PASS_THROUGH'}
-        self.datablock, self.data_path, _ = context.property
+        self.datablock, self.data_path, _ = data
         prop = matching_variables.get_hovered_property(context)
         if not prop.is_array:
             return {'CANCELLED', 'PASS_THROUGH'}
@@ -129,9 +135,10 @@ class REFMATCHER_OT_RemoveMatchingVariable(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context: Context):
-        if context.property is None:
+        data = matching_variables.get_hovered_data(context)
+        if data is None:
             return {'CANCELLED', 'PASS_THROUGH'}
-        datablock, data_path_indexed, array_index = context.property
+        datablock, data_path_indexed, array_index = data
         if array_index >= 0:
             data_path_indexed += f"[{array_index}]"
         matching_variables.remove_matching_variable(context, datablock, data_path_indexed)
@@ -145,9 +152,10 @@ class REFMATCHER_OT_RemoveMatchingVariableVector(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context: Context):
-        if context.property is None:
+        data = matching_variables.get_hovered_data(context)
+        if data is None:
             return {'CANCELLED', 'PASS_THROUGH'}
-        datablock, data_path, array_index = context.property
+        datablock, data_path, _ = data
         prop = matching_variables.get_hovered_property(context)
         if not prop.is_array:
             return {'CANCELLED', 'PASS_THROUGH'}
