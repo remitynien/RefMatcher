@@ -50,6 +50,13 @@ def set_value(datablock: ID, data_path_indexed: str, value: float):
         # if not indexed, set the value directly
         setattr(datablock.path_resolve(data_path_indexed, False).data, data_path_indexed.split(".")[-1], value)
 
+def set_matching_values(context: Context, values: Iterable[float]):
+    matching_properties: Iterable[MatchingProperty] = getattr(context.scene, MATCHING_PROPERTIES_PROPNAME)
+    assert len(values) == len(matching_properties)
+    for matching_property, value in zip(matching_properties, values):
+        datablock, data_path_indexed = matching_property.datablock, matching_property.data_path_indexed
+        set_value(datablock, data_path_indexed, value)
+
 def is_matching_variable(context: Context, datablock: ID, data_path: str, array_index: int = -1) -> bool:
     scene = context.scene
     data_path_indexed = data_path + f"[{array_index}]" if array_index >= 0 else data_path

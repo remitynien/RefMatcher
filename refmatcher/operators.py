@@ -39,7 +39,8 @@ class REFMATCHER_OT_MatchReference(Operator):
         optimizer_name = getattr(context.scene, OPTIMIZER_PROPNAME)
         optimizer_class = optimization.OPTIMIZER_BY_NAME[optimizer_name]
         optimizer: optimization.Optimizer = optimizer_class(channel, distance, reference_image, iterations, context)
-        optimizer.optimize()
+        result = optimizer.optimize()
+        matching_variables.set_matching_values(context, result.x)
         return {'FINISHED'}
 
 class REFMATCHER_OT_AddMatchingVariableFloat(Operator):
