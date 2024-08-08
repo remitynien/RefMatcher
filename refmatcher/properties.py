@@ -1,6 +1,7 @@
 import bpy
 from bpy.types import Scene, Image, PropertyGroup, ID
-from bpy.props import PointerProperty, IntProperty, EnumProperty, FloatProperty, CollectionProperty, StringProperty, FloatVectorProperty, IntVectorProperty
+from bpy.props import PointerProperty, IntProperty, EnumProperty, FloatProperty, CollectionProperty, \
+                      StringProperty, FloatVectorProperty, IntVectorProperty, BoolProperty
 
 class MatchingProperty(PropertyGroup):
     datablock: PointerProperty(name="Datablock", type=ID) # type: ignore
@@ -15,6 +16,7 @@ MATCHING_PROPERTIES_PROPNAME = "refmatcher_matching_properties"
 MATCHING_PROPERTIES_INDEX_PROPNAME = "refmatcher_matching_properties_index"
 OPTIMIZER_PROPNAME = "refmatcher_optimizer"
 REFERENCE_IMAGE_PROPNAME = "refmatcher_reference_image"
+INCLUDE_ALPHA_PROPNAME = "refmatcher_use_alpha"
 
 SCENE_ATTRIBUTES = {
     CHANNEL_PROPNAME: EnumProperty(name="Channel", description="Color channel to be used for comparison", default="LUMINANCE",
@@ -39,6 +41,7 @@ SCENE_ATTRIBUTES = {
                                         ('DIFFERENTIAL_EVOLUTION', "Differential Evolution", "Good for large numbers of parameters ?"),
                                     ]),
     REFERENCE_IMAGE_PROPNAME: PointerProperty(name="Reference", description="Reference image", type=Image),
+    INCLUDE_ALPHA_PROPNAME: BoolProperty(name="Include alpha", description="Include alpha channel", default=False),
 }
 
 scene_vector_properties = set()

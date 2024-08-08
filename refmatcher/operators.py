@@ -3,7 +3,8 @@ from bpy.types import Operator, Context, Image, Event
 from bpy.props import FloatProperty
 from refmatcher import dependencies, optimization, matching_variables
 from refmatcher.properties import REFERENCE_IMAGE_PROPNAME, CHANNEL_PROPNAME, DISTANCE_PROPNAME, OPTIMIZER_PROPNAME, \
-    ITERATIONS_PROPNAME, MATCHING_PROPERTIES_PROPNAME, MATCHING_PROPERTIES_INDEX_PROPNAME, get_scene_vector_propname
+    ITERATIONS_PROPNAME, MATCHING_PROPERTIES_PROPNAME, MATCHING_PROPERTIES_INDEX_PROPNAME, INCLUDE_ALPHA_PROPNAME, \
+    get_scene_vector_propname
 
 class REFMATCHER_OT_InstallDependencies(Operator):
     bl_idname = "refmatcher.install_dependencies"
@@ -94,18 +95,22 @@ class REFMATCHER_OT_AddMatchingVariableVector(Operator):
         self.vector_size = -1
         self.min_propname = ""
         self.max_propname = ""
+        self.subtype = ""
 
     def draw(self, context: Context):
         layout = self.layout
         layout.prop(context.scene, self.min_propname)
         layout.prop(context.scene, self.max_propname)
+        if self.subtype == 'COLOR':
+            layout.prop(context.scene, INCLUDE_ALPHA_PROPNAME)
 
     def execute(self, context: Context):
         if not self.datablock or not self.data_path or self.vector_size < 0:
             return {'CANCELLED', 'PASS_THROUGH'}
         min = getattr(context.scene, self.min_propname)
         max = getattr(context.scene, self.max_propname)
-        for i in range(self.vector_size):
+        size = self.vector_size -1 if self.subtype == 'COLOR' and getattr(context.scene, INCLUDE_ALPHA_PROPNAME) is False else self.vector_size
+        for i in range(size):
             data_path_indexed = f"{self.data_path}[{i}]"
             matching_variables.add_matching_variable(context, self.datablock, data_path_indexed, min[i], max[i])
         return {'FINISHED'}
@@ -120,10 +125,10 @@ class REFMATCHER_OT_AddMatchingVariableVector(Operator):
             return {'CANCELLED', 'PASS_THROUGH'}
         self.vector_size = prop.array_length
         vector_type = prop.type
-        subtype = prop.subtype
+        self.subtype = prop.subtype
         unit = prop.unit
-        self.min_propname = get_scene_vector_propname(context.scene, vector_type, self.vector_size, subtype, unit, "Min")
-        self.max_propname = get_scene_vector_propname(context.scene, vector_type, self.vector_size, subtype, unit, "Max")
+        self.min_propname = get_scene_vector_propname(context.scene, vector_type, self.vector_size, self.subtype, unit, "Min")
+        self.max_propname = get_scene_vector_propname(context.scene, vector_type, self.vector_size, self.subtype, unit, "Max")
         setattr(context.scene, self.min_propname, [prop.soft_min] * self.vector_size)
         setattr(context.scene, self.max_propname, [prop.soft_max] * self.vector_size)
         return context.window_manager.invoke_props_dialog(self)
