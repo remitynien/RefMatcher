@@ -4,7 +4,7 @@ bl_info = {
     "author": "Rémi Tynien",
     "version": (0, 0),
     "blender": (4, 0, 0),
-    "location": "View3D > Right Panel > Ref Matcher",
+    "location": "Render panel",
     "warning": "",
     "doc_url": "",
     "tracker_url": "",
