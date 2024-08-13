@@ -44,7 +44,25 @@ SCENE_ATTRIBUTES = {
     INCLUDE_ALPHA_PROPNAME: BoolProperty(name="Include alpha", description="Include alpha channel", default=False),
 }
 
-scene_vector_properties = set()
+VECTOR_TO_FLOAT_SUBTYPE = {
+    'COLOR': 'FACTOR',
+    'COLOR_GAMMA': 'FACTOR',
+    'TRANSLATION': 'DISTANCE',
+    'DIRECTION': 'FACTOR',
+    'VELOCITY': 'NONE',
+    'ACCELERATION': 'NONE',
+    'MATRIX': 'NONE',
+    'EULER': 'ANGLE',
+    'QUATERNION': 'FACTOR',
+    'AXISANGLE': 'ANGLE', # TODO: depend on index
+    'XYZ': 'DISTANCE',
+    'XYZ_LENGTH': 'DISTANCE',
+    'COORDINATES': 'DISTANCE',
+    'LAYER': 'UNSIGNED',
+    'LAYER_MEMBER': 'UNSIGNED',
+}
+
+scene_dynamic_properties = set()
 def get_scene_vector_propname(scene: Scene, type: str, size: int, subtype: str, unit: str, name: str) -> str:
     assert type in {'FLOAT', 'INT'}, f"Invalid type: {type}"
     propname = f"refmatcher_{type.lower()}_vector_{size}_{subtype.lower()}_{unit.lower()}_{name.lower()}"
@@ -54,7 +72,21 @@ def get_scene_vector_propname(scene: Scene, type: str, size: int, subtype: str, 
         elif type == 'INT':
             prop = IntVectorProperty(name=name, size=size, subtype=subtype, unit=unit)
         setattr(Scene, propname, prop)
-        scene_vector_properties.add(propname)
+        scene_dynamic_properties.add(propname)
+    return propname
+
+def get_scene_propname(scene: Scene, type: str, subtype: str, unit: str, name: str) -> str:
+    assert type in {'FLOAT', 'INT'}, f"Invalid type: {type}"
+    if subtype in VECTOR_TO_FLOAT_SUBTYPE:
+        subtype = VECTOR_TO_FLOAT_SUBTYPE[subtype]
+    propname = f"refmatcher_{type.lower()}_{subtype.lower()}_{unit.lower()}_{name.lower()}"
+    if not hasattr(scene, propname):
+        if type == 'FLOAT':
+            prop = FloatProperty(name=name, subtype=subtype, unit=unit)
+        elif type == 'INT':
+            prop = IntProperty(name=name, subtype=subtype, unit=unit)
+        setattr(Scene, propname, prop)
+        scene_dynamic_properties.add(propname)
     return propname
 
 def register():
@@ -65,7 +97,7 @@ def register():
 def unregister():
     for propname in SCENE_ATTRIBUTES:
         delattr(Scene, propname)
-    for propname in scene_vector_properties:
+    for propname in scene_dynamic_properties:
         delattr(Scene, propname)
-    scene_vector_properties.clear()
+    scene_dynamic_properties.clear()
     bpy.utils.unregister_class(MatchingProperty)

@@ -4,7 +4,7 @@ from bpy.props import FloatProperty
 from refmatcher import dependencies, optimization, matching_variables
 from refmatcher.properties import REFERENCE_IMAGE_PROPNAME, CHANNEL_PROPNAME, DISTANCE_PROPNAME, OPTIMIZER_PROPNAME, \
     ITERATIONS_PROPNAME, MATCHING_PROPERTIES_PROPNAME, MATCHING_PROPERTIES_INDEX_PROPNAME, INCLUDE_ALPHA_PROPNAME, \
-    get_scene_vector_propname
+    get_scene_vector_propname, get_scene_propname
 
 class REFMATCHER_OT_InstallDependencies(Operator):
     bl_idname = "refmatcher.install_dependencies"
@@ -58,11 +58,20 @@ class REFMATCHER_OT_AddMatchingVariableFloat(Operator):
         super().__init__()
         self.datablock = None
         self.data_path_indexed = ""
+        self.min_propname = ""
+        self.max_propname = ""
+
+    def draw(self, context: Context):
+        layout = self.layout
+        layout.prop(context.scene, self.min_propname)
+        layout.prop(context.scene, self.max_propname)
 
     def execute(self, context: Context):
         if not self.datablock or not self.data_path_indexed:
             return {'CANCELLED', 'PASS_THROUGH'}
-        matching_variables.add_matching_variable(context, self.datablock, self.data_path_indexed, self.minimum, self.maximum)
+        min = getattr(context.scene, self.min_propname)
+        max = getattr(context.scene, self.max_propname)
+        matching_variables.add_matching_variable(context, self.datablock, self.data_path_indexed, min, max)
         return {'FINISHED'}
 
     def invoke(self, context: Context, event: Event):
@@ -76,9 +85,14 @@ class REFMATCHER_OT_AddMatchingVariableFloat(Operator):
         is_array = matching_variables.is_array(property, array_index)
         if is_array:
             self.data_path_indexed += f"[{min(array_index, 0)}]" # covers edge case where array_index = -1 but is_array is True
-        property: bpy.types.FloatProperty = matching_variables.get_hovered_property(context)
-        self.minimum = property.soft_min
-        self.maximum = property.soft_max
+        prop = matching_variables.get_hovered_property(context)
+        value_type = prop.type
+        subtype = prop.subtype
+        unit = prop.unit
+        self.min_propname = get_scene_propname(context.scene, value_type, subtype, unit, "Min")
+        self.max_propname = get_scene_propname(context.scene, value_type, subtype, unit, "Max")
+        setattr(context.scene, self.min_propname, prop.soft_min)
+        setattr(context.scene, self.max_propname, prop.soft_max)
         return context.window_manager.invoke_props_dialog(self)
 
 class REFMATCHER_OT_AddMatchingVariableVector(Operator):
