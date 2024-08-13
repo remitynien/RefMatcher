@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Counter</title>
+    <link rel="stylesheet" href="style.css">
+    <!--
+    <script src="js/csv.min.js"></script>
+    <script src="js/chart.min.js"></script>
+    -->
+</head>
+<body>
+    <div class="container">
+        <h1>Counter : <span id="counter">0</span></h1>
+    </div>
+    <script>
+        function getQueryParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                interval: parseInt(urlParams.get('interval')) || 5000,
+                directory: urlParams.get('dir') || null
+            };
+        }
+
+        const { interval, directory } = getQueryParams();
+
+        console.log("interval:", interval);
+        console.log("dir:", directory);
+
+        let counter = 0;
+        const counterElement = document.getElementById('counter');
+        setInterval(() => {
+            counter++;
+            counterElement.textContent = counter;
+        }, interval);
+    </script>
+</body>
+</html>
