@@ -19,7 +19,7 @@ REFERENCE_IMAGE_PROPNAME = "refmatcher_reference_image"
 INCLUDE_ALPHA_PROPNAME = "refmatcher_use_alpha"
 
 SCENE_ATTRIBUTES = {
-    CHANNEL_PROPNAME: EnumProperty(name="Channel", description="Color channel to be used for comparison", default="LUMINANCE",
+    CHANNEL_PROPNAME: EnumProperty(name="Channel", description="Color channel to be used for comparison", default="RGB",
                                    items=[
                                         ('LUMINANCE', "Luminance", "Luminance channel"),
                                         ('RED', "Red", "Red channel"),
