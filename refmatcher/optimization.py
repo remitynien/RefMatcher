@@ -14,7 +14,8 @@ import numpy as np
 import csv
 import os
 
-CSV_PATH = os.path.join(bpy.app.tempdir, "progress.csv")
+WORK_DIR = os.path.join(bpy.app.tempdir, "refmatcher")
+CSV_PATH = os.path.join(WORK_DIR, "progress.csv")
 
 class Optimizer(ABC):
     def __init__(self, channel: str, distance: str, reference_image: Image, iterations: int, context: Context):
@@ -41,7 +42,7 @@ class Optimizer(ABC):
     def evaluate(self, x: np.ndarray) -> float:
         matching_variables.set_matching_values(self.context, x)
         bpy.ops.render.render(write_still=True)
-        rendered_image = image_comparison.rendered_image()
+        rendered_image = image_comparison.rendered_image(WORK_DIR)
         result = image_comparison.compare_images(self.reference_image, rendered_image, self.channel, self.distance)
         self.current_iteration += 1
         self.scores.append(result)
@@ -58,7 +59,10 @@ class Optimizer(ABC):
 
     def optimize(self) -> opt.OptimizeResult:
         self.current_iteration = 0
-        self.server = server.OptimizeViewServer(8000, CSV_PATH) # TODO: add addon parameter with default port
+        # TODO: add addon parameter with default port
+        # TODO: create server object only once, and just start it in this method
+        self.server = server.OptimizeViewServer(8000, WORK_DIR)
+        self.server.start()
         self.scores = []
         self.update_csv_file()
         result = self._run_optimize_algorithm()

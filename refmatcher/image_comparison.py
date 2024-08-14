@@ -4,10 +4,10 @@ import numpy as np
 import os
 
 
-def rendered_image() -> Image:
+def rendered_image(render_path: str) -> Image:
     # TODO: refactor to avoid saving and loading rendered image. See if https://blender.stackexchange.com/a/248543 can be updated for 4.0 (bgl is deprecated)
     filename = "render.png"
-    filepath = os.path.join(bpy.app.tempdir, "render.png")
+    filepath = os.path.join(render_path, "render.png")
     render_result = next(image for image in bpy.data.images if image.type == "RENDER_RESULT")
     # must save then load render, since render.pixels is empty otherwise
     render_result.save_render(filepath)
