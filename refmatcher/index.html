@@ -2,37 +2,86 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>Counter</title>
+    <title>View</title>
     <link rel="stylesheet" href="style.css">
-    <!--
-    <script src="js/csv.min.js"></script>
     <script src="js/chart.min.js"></script>
-    -->
+    <script src="js/csv.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Counter : <span id="counter">0</span></h1>
+        <canvas id="myChart"></canvas>
     </div>
     <script>
         function getQueryParams() {
             const urlParams = new URLSearchParams(window.location.search);
             return {
                 interval: parseInt(urlParams.get('interval')) || 5000,
-                directory: urlParams.get('dir') || null
             };
         }
 
-        const { interval, directory } = getQueryParams();
+        const { interval } = getQueryParams();
+        const url = new URL(window.location.href);
+        const csvUrl = `${url.origin}/progress.csv`;
 
-        console.log("interval:", interval);
-        console.log("dir:", directory);
+        function updateCSV() {
+            CSV.fetch({
+                url: csvUrl,
+                noHeaderRow: true,
+            })
+            .then(function(dataset) {
+                values = dataset.records[0].map(Number)
+                updateChart(values);
+            });
+        }
 
-        let counter = 0;
-        const counterElement = document.getElementById('counter');
-        setInterval(() => {
-            counter++;
-            counterElement.textContent = counter;
-        }, interval);
+        const ctx = document.getElementById('myChart').getContext('2d');
+        let myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Optimization score',
+                    data: [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    fill: false,
+                    tension: 0,
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        min: 0,
+                        max: 1,
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        function generateRandomData(numSamples) {
+            const data = [];
+            for (let i = 0; i < numSamples; i++) {
+                data.push(Math.random());
+            }
+            return data;
+        }
+
+        function updateChart(newData = null) {
+            if (newData == null)
+            {
+                const numSamples = Math.floor(Math.random() * 11) + 10; // From 10 to 20 samples
+                newData = generateRandomData(numSamples);
+            }
+            myChart.data.labels = Array.from({length: newData.length}, (_, i) => i + 1); // Labels from 1 to length
+            myChart.data.datasets[0].data = newData;
+            myChart.update();
+        }
+
+        updateCSV();
+        setInterval(updateCSV, interval);
     </script>
 </body>
 </html>

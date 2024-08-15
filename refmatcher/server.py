@@ -3,9 +3,8 @@ import webbrowser
 import threading
 import shutil
 from pathlib import Path
-import refmatcher
 
-MODULE_DIR = Path(refmatcher.__file__).parent
+MODULE_DIR = Path(__file__).parent
 
 class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -55,3 +54,15 @@ class OptimizeViewServer():
 
     def __del__(self):
         self.shutdown()
+
+if __name__ == "__main__":
+    # debug server
+    import os
+    print("Create server object")
+    server = OptimizeViewServer(8001, os.path.join(os.path.curdir, "server_dir"))
+    print("Start server")
+    server.start()
+    input("Press Enter to shutdown...\n")
+    print("Shutdown server")
+    server.shutdown()
+    print("Done")
