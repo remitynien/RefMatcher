@@ -13,9 +13,24 @@ import scipy.optimize as opt
 import numpy as np
 import csv
 import os
+import time
 
 WORK_DIR = os.path.join(bpy.app.tempdir, "refmatcher")
 CSV_PATH = os.path.join(WORK_DIR, "progress.csv")
+
+def format_time(time_s: float) -> str:
+    if time_s > 604800: # 7 days = 604800 seconds
+        return "eternity"
+    hours, remainder = divmod(max(time_s, 0), 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    parts = []
+    if hours > 0:
+        parts.append(f"{int(hours)}h")
+    parts.append(f"{int(minutes)}m")
+    parts.append(f"{int(seconds)}s")
+
+    return "".join(parts)
 
 class Optimizer(ABC):
     def __init__(self, channel: str, distance: str, reference_image: Image, iterations: int, context: Context):
@@ -25,6 +40,7 @@ class Optimizer(ABC):
         self.iterations = iterations
         self.context = context
         self.current_iteration = 0
+        self.start_time = 0
         self.server = None
         self.scores = []
 
@@ -59,9 +75,10 @@ class Optimizer(ABC):
 
     def optimize(self) -> opt.OptimizeResult:
         self.current_iteration = 0
+        self.start_time = time.time()
         # TODO: add addon parameter with default port
         # TODO: create server object only once, and just start it in this method
-        self.server = server.OptimizeViewServer(8000, WORK_DIR)
+        self.server = server.OptimizeViewServer(8000, WORK_DIR, self.get_optimize_data)
         self.server.start()
         self.scores = []
         self.update_csv_file()
@@ -69,6 +86,16 @@ class Optimizer(ABC):
         self.server.shutdown()
         self.server = None
         return result
+
+    def get_optimize_data(self) -> dict:
+        elapsed = time.time() - self.start_time
+        remaining = elapsed * self.iterations / self.current_iteration if self.current_iteration > 0 else None
+        remaining_str = format_time(remaining) if remaining else "?"
+        return {
+            "Elapsed": format_time(elapsed),
+            "Remaining": remaining_str,
+            "Iteration": f"{self.current_iteration} / ~{self.iterations}",
+        }
 
     @abstractmethod
     def _run_optimize_algorithm(self) -> opt.OptimizeResult:

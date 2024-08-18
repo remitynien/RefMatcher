@@ -8,10 +8,28 @@
     <script src="js/csv.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div class="sidebar">
+        <div class="button-container">
+            <button id="toggleSidebar">☰</button>
+        </div>
+        <div id="infoPanel">
+            <h1>Optimization data</h1>
+            <table id="dataTable"></table>
+        </div>
+    </div>
+    <div class="chart-container">
         <canvas id="myChart"></canvas>
     </div>
-    <script>
+    <script> // interactions
+        const toggleSidebarButton = document.getElementById('toggleSidebar');
+        const sidebar = document.querySelector('.sidebar');
+
+        toggleSidebarButton.addEventListener('click',
+        () => {
+            sidebar.classList.toggle('collapsed');
+        });
+    </script>
+    <script> // graph update
         function getQueryParams() {
             const urlParams = new URLSearchParams(window.location.search);
             return {
@@ -20,19 +38,6 @@
         }
 
         const { interval } = getQueryParams();
-        const url = new URL(window.location.href);
-        const csvUrl = `${url.origin}/progress.csv`;
-
-        function updateCSV() {
-            CSV.fetch({
-                url: csvUrl,
-                noHeaderRow: true,
-            })
-            .then(function(dataset) {
-                values = dataset.records[0].map(Number)
-                updateChart(values);
-            });
-        }
 
         const ctx = document.getElementById('myChart').getContext('2d');
         let myChart = new Chart(ctx, {
@@ -49,6 +54,8 @@
                 }]
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     x: {
                         min: 0,
@@ -80,8 +87,40 @@
             myChart.update();
         }
 
+        function updateCSV() {
+            CSV.fetch({
+                url: "/progress.csv",
+                noHeaderRow: true,
+            })
+            .then(function(dataset) {
+                values = dataset.records[0].map(Number)
+                updateChart(values);
+            });
+        }
+
+        function updateData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(jsonData => {
+                    const dataTable = document.getElementById('dataTable');
+                    dataTable.innerHTML = ''; // Reset table
+                    for (const key in jsonData) {
+                        const row = dataTable.insertRow();
+                        const keyCell = row.insertCell();
+                        const valueCell = row.insertCell();
+                        keyCell.textContent = key;
+                        valueCell.textContent = jsonData[key];
+                    }
+                });
+        }
+
+        function updateAll() {
+            updateCSV();
+            updateData();
+        }
+
         updateCSV();
-        setInterval(updateCSV, interval);
+        setInterval(updateAll, interval);
     </script>
 </body>
 </html>

@@ -3,23 +3,39 @@ import webbrowser
 import threading
 import shutil
 from pathlib import Path
+import json
+from typing import Callable
 
 MODULE_DIR = Path(__file__).parent
 
 class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, live_data_callback: Callable[[], dict], *args, **kwargs):
+        self.live_data_callback = live_data_callback
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
         if self.path == "/":
             self.path = "/index.html"
+        elif self.path == '/data':
+            data = self.live_data_callback()
+            json_data = json.dumps(data)
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json_data.encode())
+            return
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
+    def log_message(self, format: str, *args) -> None:
+        # override log function to remove console logs
+        pass
+
 class OptimizeViewServer():
-    def __init__(self, port: int, work_dir: str):
+    def __init__(self, port: int, work_dir: str, live_data_callback: Callable[[], dict]):
         self.port = port
         self.work_dir = work_dir
         self.httpd = None
+        self.live_data_callback = live_data_callback
         self._ensure_server_files()
 
     def _ensure_server_files(self):
@@ -33,7 +49,7 @@ class OptimizeViewServer():
     def _start_server(self):
         # TODO: test if port is free (by catching OSError if no specific function allows port testing), if not use port 0 (port allocated by the OS)
         with http.server.HTTPServer(("", self.port),
-                                    lambda *args, **kwargs: HTTPRequestHandler(*args, directory=self.work_dir, **kwargs)
+                                    lambda *args, **kwargs: HTTPRequestHandler(self.live_data_callback, *args, directory=self.work_dir, **kwargs)
                                     )as httpd:
             self.httpd = httpd
             # TODO: add opening tab option in addon preferences
@@ -59,7 +75,8 @@ if __name__ == "__main__":
     # debug server
     import os
     print("Create server object")
-    server = OptimizeViewServer(8001, os.path.join(os.path.curdir, "server_dir"))
+    callback = lambda : {"field 1": 1, "field 2": 222, "field 3": "three"}
+    server = OptimizeViewServer(8001, os.path.join(os.path.curdir, "server_dir"), callback)
     print("Start server")
     server.start()
     input("Press Enter to shutdown...\n")
