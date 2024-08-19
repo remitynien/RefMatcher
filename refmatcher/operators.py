@@ -30,7 +30,8 @@ class REFMATCHER_OT_MatchReference(Operator):
 
     @classmethod
     def poll(cls, context: Context) -> bool:
-        return getattr(context.scene, REFERENCE_IMAGE_PROPNAME) is not None
+        return getattr(context.scene, REFERENCE_IMAGE_PROPNAME) is not None and \
+            len(getattr(context.scene, MATCHING_PROPERTIES_PROPNAME)) > 0
 
     def execute(self, context: Context):
         reference_image: Image = getattr(context.scene, REFERENCE_IMAGE_PROPNAME)
