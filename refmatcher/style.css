@@ -1,3 +1,7 @@
+:root {
+    --sidebar-width: 250px;
+}
+
 body {
     font-family: sans-serif;
     display: flex;
@@ -7,7 +11,7 @@ body {
 }
 
 .sidebar {
-    width: 250px;
+    width: var(--sidebar-width);
     background-color: #fff;
     padding: 20px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -17,7 +21,12 @@ body {
 
 .sidebar.collapsed {
     width: 0;
-    padding: 0;
+    padding: 20px 0;
+}
+
+.sidebar-inner {
+    overflow: hidden;
+    height: 100%;
 }
 
 .button-container {
@@ -59,7 +68,10 @@ body {
 
 #infoPanel {
     background-color: #fff;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: var(--sidebar-width);
+    height: 100%;
 }
 
 .chart-container {
@@ -91,4 +103,27 @@ body {
 
 #infoPanel tr:nth-child(even) {
     background-color: #e7e7e7;
+}
+
+#infoPanel #stopButton {
+    display: block;
+    margin: auto auto 0;
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+#infoPanel #stopButton:hover {
+    background-color: #c82333;
+}
+
+#infoPanel #stopButton.clicked {
+    background-color: #6c757d;
+    cursor: default;
 }

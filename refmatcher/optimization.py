@@ -32,6 +32,9 @@ def format_time(time_s: float) -> str:
 
     return "".join(parts)
 
+class UserInterrupt(Exception):
+    pass
+
 class Optimizer(ABC):
     def __init__(self, channel: str, distance: str, reference_image: Image, iterations: int, context: Context):
         self.channel = channel
@@ -41,8 +44,11 @@ class Optimizer(ABC):
         self.context = context
         self.current_iteration = 0
         self.start_time = 0
+        self.stop = False
         self.server = None
         self.scores = []
+        self.lowest_score = np.inf
+        self.best_input = np.array([])
 
     def initial_parameters(self) -> tuple[list[float], list[tuple[float, float]]]:
         x0: list[float] = []
@@ -56,12 +62,17 @@ class Optimizer(ABC):
         return x0, bounds
 
     def evaluate(self, x: np.ndarray) -> float:
+        if self.stop:
+            raise UserInterrupt
         matching_variables.set_matching_values(self.context, x)
         bpy.ops.render.render(write_still=True)
         rendered_image = image_comparison.rendered_image(WORK_DIR)
         result = image_comparison.compare_images(self.reference_image, rendered_image, self.channel, self.distance)
         self.current_iteration += 1
         self.scores.append(result)
+        if result < self.lowest_score:
+            self.lowest_score = result
+            self.best_input = x
         self.update_csv_file()
         self.context.window_manager.progress_update(self.current_iteration)
         print(f"x: {x}, result: {result}")
@@ -73,19 +84,25 @@ class Optimizer(ABC):
             writer = csv.writer(csvfile)
             writer.writerow(self.scores)
 
-    def optimize(self) -> opt.OptimizeResult:
+    def optimize(self) -> list[float]:
         self.current_iteration = 0
         self.start_time = time.time()
+        self.stop = False
+        self.lowest_score = np.inf
+        self.best_input = []
         # TODO: add addon parameter with default port
         # TODO: create server object only once, and just start it in this method
-        self.server = server.OptimizeViewServer(8000, WORK_DIR, self.get_optimize_data)
+        self.server = server.OptimizeViewServer(8000, WORK_DIR, self.get_optimize_data, self.stop_optimization)
         self.server.start()
         self.scores = []
         self.update_csv_file()
-        result = self._run_optimize_algorithm()
+        try:
+            result = self._run_optimize_algorithm().x
+        except UserInterrupt:
+            result = self.best_input if len(self.best_input) > 0 else self.initial_parameters()[0]
         self.server.shutdown()
         self.server = None
-        return result
+        return list(result)
 
     def get_optimize_data(self) -> dict:
         elapsed = time.time() - self.start_time
@@ -96,6 +113,9 @@ class Optimizer(ABC):
             "Remaining": remaining_str,
             "Iteration": f"{self.current_iteration} / ~{self.iterations}",
         }
+
+    def stop_optimization(self):
+        self.stop = True
 
     @abstractmethod
     def _run_optimize_algorithm(self) -> opt.OptimizeResult:

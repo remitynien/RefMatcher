@@ -12,9 +12,12 @@
         <div class="button-container">
             <button id="toggleSidebar">☰</button>
         </div>
-        <div id="infoPanel">
-            <h1>Optimization data</h1>
-            <table id="dataTable"></table>
+        <div class="sidebar-inner">
+            <div id="infoPanel">
+                <h1>Optimization data</h1>
+                <table id="dataTable"></table>
+                <button id="stopButton">Interrupt</button>
+            </div>
         </div>
     </div>
     <div class="chart-container">
@@ -23,10 +26,20 @@
     <script> // interactions
         const toggleSidebarButton = document.getElementById('toggleSidebar');
         const sidebar = document.querySelector('.sidebar');
+        const stopButton = document.getElementById('stopButton');
+        let isButtonClicked = false;
 
         toggleSidebarButton.addEventListener('click',
         () => {
             sidebar.classList.toggle('collapsed');
+        });
+
+        stopButton.addEventListener('click', () => {
+            if (!isButtonClicked) {
+                fetch('/stop');
+                stopButton.classList.add('clicked');
+                isButtonClicked = true;
+            }
         });
     </script>
     <script> // graph update
