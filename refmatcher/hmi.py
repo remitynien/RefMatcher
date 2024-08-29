@@ -2,6 +2,8 @@ import bpy
 from bpy.types import Panel, Context, Menu, Property, UIList, UILayout, AnyType
 from refmatcher import operators, properties, dependencies, matching_variables
 
+# TODO: fix add/remove display
+
 class REFMATCHER_UL_MatchingProperties(UIList):
     bl_idname = "REFMATCHER_UL_MatchingProperties"
 

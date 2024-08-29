@@ -85,7 +85,7 @@ class REFMATCHER_OT_AddMatchingVariableFloat(Operator):
             return {'CANCELLED', 'PASS_THROUGH'}
         is_array = matching_variables.is_array(property, array_index)
         if is_array:
-            self.data_path_indexed += f"[{min(array_index, 0)}]" # covers edge case where array_index = -1 but is_array is True
+            self.data_path_indexed += f"[{max(array_index, 0)}]" # covers edge case where array_index = -1 but is_array is True
         prop = matching_variables.get_hovered_property(context)
         value_type = prop.type
         subtype = prop.subtype
