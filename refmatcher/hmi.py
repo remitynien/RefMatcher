@@ -65,6 +65,9 @@ class REFMATCHER_PT_MainPanel(Panel):
         interactive_layout.operator(operators.REFMATCHER_OT_MatchReference.bl_idname)
 
 def draw_variable_menu(self: Menu, context: Context):
+    if not matching_variables.check_context(context):
+        return
+
     data = matching_variables.get_hovered_data(context)
     if data is None:
         return

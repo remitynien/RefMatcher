@@ -4,6 +4,45 @@ from refmatcher.properties import MatchingProperty, MATCHING_PROPERTIES_PROPNAME
 from typing import Iterable
 import re
 
+def node_tree_data_collection() -> Iterable[Iterable[ID]]:
+    # TODO: access through context.blend_data instead of bpy.data ?
+    yield bpy.data.materials
+    yield bpy.data.worlds
+    yield bpy.data.textures
+    yield bpy.data.linestyles
+    yield bpy.data.lights
+    yield bpy.data.scenes
+
+
+def get_root_ID_from_embedded_ID(datablock: ID) -> tuple[ID, str]:
+    """Tries to fix embedded data which are handled in this function and returns a tuple (root_id, path_to_embedded_id), raise a ValueError otherwise."""
+    if not datablock.is_embedded_data:
+        return (datablock, "")
+    # TODO: find a better and generic way to access root ID. Might cause lags in huge Blender projects ?
+    if datablock.id_type == 'NODETREE':
+        for data_collection in node_tree_data_collection():
+            for data in data_collection:
+                node_tree = getattr(data, "node_tree")
+                if node_tree is datablock:
+                    return (data, "node_tree")
+    raise ValueError(f"Unable to get parent data of embedded data {datablock}")
+
+def check_ID(datablock: ID) -> bool:
+    """Check if this datablock is usable for matching variables"""
+    return not datablock.is_embedded_data and \
+        not datablock.is_evaluated and \
+        not datablock.is_library_indirect and \
+        not datablock.is_missing and \
+        not datablock.is_runtime_data
+
+def check_context(context: Context) -> bool:
+    """Check if current context is usable for adding or removing matching variables"""
+    data = get_hovered_data(context)
+    if data is None:
+        return False
+    datablock, _, _ = data
+    return check_ID(datablock)
+
 def is_optimizable_property(property: Property) -> bool:
     # return property.type in {"FLOAT", "INT"}
     return property.type == "FLOAT" # TODO: accept more types
@@ -12,13 +51,13 @@ def get_hovered_property(context: Context) -> Property | None:
     return getattr(context, 'button_prop', None)
 
 def get_hovered_data(context: Context) -> tuple[bpy.types.AnyType, str, int] | None:
-    prop = getattr(context, 'button_prop', None)
-    ptr = getattr(context, 'button_pointer', None)
+    prop = getattr(context, 'button_prop', None) # property struct of hovered property
+    ptr = getattr(context, 'button_pointer', None) # bpy_struct direct or indirect parent of prop. Might or might not be parent datablock.
     if prop is None or ptr is None:
         return None
 
     try:
-        data_path = ptr.path_from_id(prop.identifier)
+        data_path = ptr.path_from_id(prop.identifier) # path from datablock to the property
     except ValueError: # does not support path creation for this type
         return None
     except AttributeError: # path from id not found
@@ -28,6 +67,12 @@ def get_hovered_data(context: Context) -> tuple[bpy.types.AnyType, str, int] | N
             return None
 
     datablock, _, array_index = context.property # data_path isn't taken from context.property since it doesn't return full data path on modifiers or nodes.
+    if datablock.is_embedded_data:
+        try:
+            root_datablock, path = get_root_ID_from_embedded_ID(datablock)
+            return (root_datablock, ".".join([path, data_path]), array_index)
+        except ValueError:
+            return None
     return (datablock, data_path, array_index)
 
 def is_array(property: Property, array_index: int) -> bool:

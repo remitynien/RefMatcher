@@ -55,6 +55,11 @@ class REFMATCHER_OT_AddMatchingVariableFloat(Operator):
     minimum: FloatProperty(name="Minimum value", default=0.0) # type: ignore
     maximum: FloatProperty(name="Maximum value", default=1.0) # type: ignore
 
+    # TODO: Fix incoherent context on poll
+    # @classmethod
+    # def poll(cls, context: Context) -> bool:
+    #     return matching_variables.check_context(context)
+
     def __init__(self) -> None:
         super().__init__()
         self.datablock = None
@@ -102,6 +107,11 @@ class REFMATCHER_OT_AddMatchingVariableVector(Operator):
     bl_label = "Add all matching variables"
     bl_description = "Add the properties to the list of matching variables"
     bl_options = {'REGISTER', 'UNDO'}
+
+    # TODO: Fix incoherent context on poll
+    # @classmethod
+    # def poll(cls, context: Context) -> bool:
+    #     return matching_variables.check_context(context)
 
     def __init__(self) -> None:
         super().__init__()
@@ -155,6 +165,11 @@ class REFMATCHER_OT_RemoveMatchingVariable(Operator):
     bl_description = "Remove the property from the list of matching variables"
     bl_options = {'REGISTER', 'UNDO'}
 
+    # TODO: Fix incoherent context on poll (context.property, context.button_prop and context.button_pointer are None)
+    # @classmethod
+    # def poll(cls, context: Context) -> bool:
+    #     return matching_variables.check_context(context)
+
     def execute(self, context: Context):
         data = matching_variables.get_hovered_data(context)
         if data is None:
@@ -171,6 +186,11 @@ class REFMATCHER_OT_RemoveMatchingVariableVector(Operator):
     bl_label = "Remove all matching variables"
     bl_description = "Removes the properties from the list of matching variables"
     bl_options = {'REGISTER', 'UNDO'}
+
+    # TODO: Fix incoherent context on poll (context.property, context.button_prop and context.button_pointer are None)
+    # @classmethod
+    # def poll(cls, context: Context) -> bool:
+    #     return matching_variables.check_context(context)
 
     def execute(self, context: Context):
         data = matching_variables.get_hovered_data(context)
