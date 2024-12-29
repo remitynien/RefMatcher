@@ -2,6 +2,8 @@ import bpy
 import os
 import zipfile
 
+# command line usage: blender -P install.py
+
 def package(directory_path):
     with zipfile.ZipFile("refmatcher.zip", 'w', zipfile.ZIP_STORED) as zipf:
         for root, _, files in os.walk(directory_path):
