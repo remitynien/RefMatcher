@@ -3,7 +3,7 @@ bl_info = {
     "description": "Makes your render match your reference image.",
     "author": "Rémi Tynien",
     "version": (0, 0),
-    "blender": (4, 0, 0),
+    "blender": (4, 1, 0),
     "location": "Render panel",
     "warning": "",
     "doc_url": "",

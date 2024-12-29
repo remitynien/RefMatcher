@@ -8,6 +8,7 @@ class REFMATCHER_UL_MatchingProperties(UIList):
     bl_idname = "REFMATCHER_UL_MatchingProperties"
 
     def draw_item(self, context: Context, layout: UILayout, data: AnyType, item: properties.MatchingProperty, icon: int, active_data: AnyType, active_property: str):
+        # layout.alert = True
         layout.separator()
         readonly = layout.row()
         readonly.enabled = False

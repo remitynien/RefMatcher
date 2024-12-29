@@ -31,7 +31,8 @@ class REFMATCHER_OT_MatchReference(Operator):
     @classmethod
     def poll(cls, context: Context) -> bool:
         return getattr(context.scene, REFERENCE_IMAGE_PROPNAME) is not None and \
-            len(getattr(context.scene, MATCHING_PROPERTIES_PROPNAME)) > 0
+            len(getattr(context.scene, MATCHING_PROPERTIES_PROPNAME)) > 0 and \
+            matching_variables.check_matching_values()
 
     def execute(self, context: Context):
         reference_image: Image = getattr(context.scene, REFERENCE_IMAGE_PROPNAME)

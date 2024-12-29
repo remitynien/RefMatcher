@@ -102,6 +102,16 @@ def set_matching_values(context: Context, values: Iterable[float]):
         datablock, data_path_indexed = matching_property.datablock, matching_property.data_path_indexed
         set_value(datablock, data_path_indexed, value)
 
+def check_matching_values(context: Context):
+    matching_properties: Iterable[MatchingProperty] = getattr(context.scene, MATCHING_PROPERTIES_PROPNAME)
+    for matching_property in matching_properties:
+        datablock, data_path_indexed = matching_property.datablock, matching_property.data_path_indexed
+        try:
+            datablock.path_resolve(data_path_indexed)
+        except ValueError:
+            return False
+    return True
+
 def is_matching_variable(context: Context, datablock: ID, data_path: str, array_index: int = -1) -> bool:
     scene = context.scene
     data_path_indexed = data_path + f"[{array_index}]" if array_index >= 0 else data_path
